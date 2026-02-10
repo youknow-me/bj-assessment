@@ -12,6 +12,7 @@ const EMAIL = process.env.EMAIL || "user@chitkara.edu.in";
 app.use(cors());
 app.use(express.json());
 
+// Initialize Gemini AI
 const genAI = process.env.GEMINI_API_KEY 
     ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) 
     : null;
@@ -31,7 +32,6 @@ app.post('/bfhl', async (req, res) => {
     try {
         const body = req.body;
         let responseData = null;
-        
         
         // Case 1: Fibonacci
         if (body.fibonacci !== undefined) {
@@ -84,54 +84,35 @@ app.post('/bfhl', async (req, res) => {
             responseData = getHCF(body.hcf);
         }
         
-        // Case 5: AI
+        // Case 5: AI 
+        else if (body.AI) {
+            if (typeof body.AI !== 'string') {
+                return res.status(400).json({
+                    is_success: false,
+                    official_email: EMAIL,
+                    message: "Invalid input: AI must be a string"
+                });
+            }
+            
+            if (!genAI) {
+                 return res.status(500).json({
+                    is_success: false,
+                    official_email: EMAIL,
+                    message: "Server Error: GEMINI_API_KEY not configured"
+                });
+            }
+            
+            
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
+            const prompt = `Answer the following question in exactly one single word: ${body.AI}`;
+            
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+            
+            responseData = text.trim().split(/\s+/)[0]; 
+        } 
         
-else if (body.AI) {
-    if (typeof body.AI !== 'string' || body.AI.trim() === "") {
-        return res.status(400).json({
-            is_success: false,
-            official_email: EMAIL,
-            message: "Invalid input: AI must be a non-empty string"
-        });
-    }
-
-    const apiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: `Answer in exactly ONE word only. No punctuation.\nQuestion: ${body.AI}`
-                    }]
-                }]
-            })
-        }
-    );
-
-   const result = await apiResponse.json();
-
-if (
-    !result ||
-    !result.candidates ||
-    !Array.isArray(result.candidates) ||
-    result.candidates.length === 0 ||
-    !result.candidates[0].content ||
-    !result.candidates[0].content.parts ||
-    !result.candidates[0].content.parts[0] ||
-    !result.candidates[0].content.parts[0].text
-) {
-
-    responseData = "Unavailable";
-} else {
-    responseData = result.candidates[0].content.parts[0].text
-        .trim()
-        .split(/\s+/)[0];
-}
-
-
-
         
         else {
             return res.status(400).json({
@@ -141,7 +122,7 @@ if (
             });
         }
 
-        
+        // Success Response
         res.status(200).json({
             is_success: true,
             official_email: EMAIL,
@@ -165,11 +146,3 @@ if (require.main === module) {
 }
 
 module.exports = app;
-
-
-
-
-
-
-
-
