@@ -1,10 +1,37 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { getFibonacci, isPrime, getLCM, getHCF } = require('./utils');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+const EMAIL = process.env.EMAIL || "user@chitkara.edu.in";
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+const genAI = process.env.GEMINI_API_KEY 
+    ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) 
+    : null;
+
+// --- ROUTES ---
+
+// 1. GET /health
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        is_success: true,
+        official_email: EMAIL
+    });
+});
+
 // 2. POST /bfhl
 app.post('/bfhl', async (req, res) => {
     try {
         const body = req.body;
         let responseData = null;
         
-        // Strict Input Validation & Logic Mapping
         
         // Case 1: Fibonacci
         if (body.fibonacci !== undefined) {
@@ -67,9 +94,15 @@ app.post('/bfhl', async (req, res) => {
                 });
             }
             
-            // Integrate Gemini AI
-            // Note: Updated to 'gemini-1.5-flash' for better speed/cost, 
-            // but 'gemini-pro' is also fine if your key supports it.
+            if (!genAI) {
+                 return res.status(500).json({
+                    is_success: false,
+                    official_email: EMAIL,
+                    message: "Server Error: GEMINI_API_KEY not configured"
+                });
+            }
+            
+            
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
             const prompt = `Answer the following question in exactly one single word: ${body.AI}`;
             
@@ -88,17 +121,15 @@ app.post('/bfhl', async (req, res) => {
             });
         }
 
-        // Success Response
+        
         res.status(200).json({
             is_success: true,
-            official_email: EMAIL, 
+            official_email: EMAIL,
             data: responseData
         });
 
     } catch (error) {
         console.error("Error processing request:", error);
-        
-        // 500 is only for actual server crashes/failures
         res.status(500).json({
             is_success: false,
             official_email: EMAIL,
@@ -106,3 +137,11 @@ app.post('/bfhl', async (req, res) => {
         });
     }
 });
+
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
