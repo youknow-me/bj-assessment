@@ -112,9 +112,23 @@ else if (body.AI) {
 
     const result = await apiResponse.json();
 
-    responseData = result.candidates[0].content.parts[0].text
-        .trim()
-        .split(/\s+/)[0];
+if (
+    !result ||
+    !result.candidates ||
+    !Array.isArray(result.candidates) ||
+    result.candidates.length === 0 ||
+    !result.candidates[0].content ||
+    !result.candidates[0].content.parts ||
+    !result.candidates[0].content.parts[0] ||
+    !result.candidates[0].content.parts[0].text
+) {
+    throw new Error("AI response malformed or blocked");
+}
+
+responseData = result.candidates[0].content.parts[0].text
+    .trim()
+    .split(/\s+/)[0];
+
 }
 
 
@@ -151,6 +165,7 @@ if (require.main === module) {
 }
 
 module.exports = app;
+
 
 
 
