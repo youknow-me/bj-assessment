@@ -122,7 +122,8 @@ if (
     !result.candidates[0].content.parts[0] ||
     !result.candidates[0].content.parts[0].text
 ) {
-    throw new Error("AI response malformed or blocked");
+    responseData = "Unavailable";
+
 }
 
 responseData = result.candidates[0].content.parts[0].text
@@ -165,6 +166,7 @@ if (require.main === module) {
 }
 
 module.exports = app;
+
 
 
 
