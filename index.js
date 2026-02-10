@@ -85,7 +85,7 @@ app.post('/bfhl', async (req, res) => {
         }
         
         // Case 5: AI
-        // Case 5: AI
+        
 else if (body.AI) {
     if (typeof body.AI !== 'string' || body.AI.trim() === "") {
         return res.status(400).json({
@@ -95,47 +95,28 @@ else if (body.AI) {
         });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({
-            is_success: false,
-            official_email: EMAIL,
-            message: "Server Error: GEMINI_API_KEY not configured"
-        });
-    }
-
-    const fetch = require("node-fetch");
-
     const apiResponse = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [
-                            {
-                                text: `Answer in exactly ONE word only. No punctuation. No explanation.\nQuestion: ${body.AI}`
-                            }
-                        ]
-                    }
-                ]
+                contents: [{
+                    parts: [{
+                        text: `Answer in exactly ONE word only. No punctuation.\nQuestion: ${body.AI}`
+                    }]
+                }]
             })
         }
     );
 
     const result = await apiResponse.json();
 
-    if (!result.candidates || !result.candidates[0]) {
-        throw new Error("AI response failed");
-    }
-
     responseData = result.candidates[0].content.parts[0].text
         .trim()
         .split(/\s+/)[0];
 }
+
 
         
         else {
@@ -170,6 +151,7 @@ if (require.main === module) {
 }
 
 module.exports = app;
+
 
 
 
