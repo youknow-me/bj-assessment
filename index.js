@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { getFibonacci, isPrime, getLCM, getHCF } = require('./utils');
 
 const app = express();
@@ -13,9 +13,9 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize Gemini AI
-const genAI = process.env.GEMINI_API_KEY 
-    ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) 
-    : null;
+// const genAI = process.env.GEMINI_API_KEY 
+//     ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) 
+//     : null;
 
 // --- ROUTES ---
 
@@ -85,33 +85,80 @@ app.post('/bfhl', async (req, res) => {
         }
         
         // Case 5: AI 
-        else if (body.AI) {
-            if (typeof body.AI !== 'string') {
-                return res.status(400).json({
-                    is_success: false,
-                    official_email: EMAIL,
-                    message: "Invalid input: AI must be a string"
-                });
-            }
+        // else if (body.AI) {
+        //     if (typeof body.AI !== 'string') {
+        //         return res.status(400).json({
+        //             is_success: false,
+        //             official_email: EMAIL,
+        //             message: "Invalid input: AI must be a string"
+        //         });
+        //     }
             
-            if (!genAI) {
-                 return res.status(500).json({
-                    is_success: false,
-                    official_email: EMAIL,
-                    message: "Server Error: GEMINI_API_KEY not configured"
-                });
-            }
+        //     if (!genAI) {
+        //          return res.status(500).json({
+        //             is_success: false,
+        //             official_email: EMAIL,
+        //             message: "Server Error: GEMINI_API_KEY not configured"
+        //         });
+        //     }
             
             
-            const model = genAI.getGenerativeModel({ model: "gemini-pro"});
-            const prompt = `Answer the following question in exactly one single word: ${body.AI}`;
+        //     const model = genAI.getGenerativeModel({ model: "gemini-pro"});
+        //     const prompt = `Answer the following question in exactly one single word: ${body.AI}`;
             
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
+        //     const result = await model.generateContent(prompt);
+        //     const response = await result.response;
+        //     const text = response.text();
             
-            responseData = text.trim().split(/\s+/)[0]; 
-        } 
+        //     responseData = text.trim().split(/\s+/)[0]; 
+        // } 
+            // Case 5: AI
+else if (body.AI) {
+    if (typeof body.AI !== "string" || body.AI.trim() === "") {
+        return res.status(400).json({
+            is_success: false,
+            official_email: EMAIL,
+            message: "Invalid input: AI must be a non-empty string"
+        });
+    }
+
+    const apiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: `Answer in exactly ONE word only.\nQuestion: ${body.AI}`
+                            }
+                        ]
+                    }
+                ]
+            })
+        }
+    );
+
+    const result = await apiResponse.json();
+
+    if (
+        !result ||
+        !result.candidates ||
+        !result.candidates[0] ||
+        !result.candidates[0].content ||
+        !result.candidates[0].content.parts ||
+        !result.candidates[0].content.parts[0]
+    ) {
+        responseData = "Unavailable";
+    } else {
+        responseData = result.candidates[0].content.parts[0].text
+            .trim()
+            .split(/\s+/)[0];
+    }
+}
+
         
         
         else {
@@ -146,4 +193,5 @@ if (require.main === module) {
 }
 
 module.exports = app;
+
 
