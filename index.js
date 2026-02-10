@@ -110,7 +110,7 @@ else if (body.AI) {
         }
     );
 
-    const result = await apiResponse.json();
+   const result = await apiResponse.json();
 
 if (
     !result ||
@@ -122,15 +122,14 @@ if (
     !result.candidates[0].content.parts[0] ||
     !result.candidates[0].content.parts[0].text
 ) {
+
     responseData = "Unavailable";
-
+} else {
+    responseData = result.candidates[0].content.parts[0].text
+        .trim()
+        .split(/\s+/)[0];
 }
 
-responseData = result.candidates[0].content.parts[0].text
-    .trim()
-    .split(/\s+/)[0];
-
-}
 
 
         
@@ -166,6 +165,7 @@ if (require.main === module) {
 }
 
 module.exports = app;
+
 
 
 
