@@ -6,13 +6,14 @@
   "scripts": {
     "start": "node index.js"
   },
-  "dependencies": {
+"dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.1",
     "express": "^4.18.2",
-    "@google/generative-ai": "^0.1.3"
-  },
+    "@google/generative-ai": "^0.21.0"
+},
   "engines": {
     "node": ">=18.x"
   }
 }
+
